@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microsoft 365 Security Assessment Report</title>
+    <meta name="description" content="Comprehensive Microsoft 365 security posture analysis and compliance report">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🛡️ Microsoft 365 Security Assessment</h1>
+                <p class="subtitle">Comprehensive Security Posture Analysis</p>
+                <div class="assessment-info">
+                    <div class="info-card">
+                        <h3>Tenant ID</h3>
+                        <p>{{TENANT_ID}}</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>Assessment Date</h3>
+                        <p>{{ASSESSMENT_DATE}}</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>Controls Evaluated</h3>
+                        <p>{{TOTAL_CONTROLS}}</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Summary Section -->
+        <section class="summary-section">
+            <div class="summary-grid">
+                <div class="score-container">
+                    <div class="score-circle">
+                        <div class="score-text">{{COMPLIANCE_SCORE}}%</div>
+                    </div>
+                    <div class="score-label">Compliance Score</div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card total">
+                        <div class="stat-number total">{{TOTAL_CONTROLS}}</div>
+                        <div class="stat-label">Total Controls</div>
+                    </div>
+                    <div class="stat-card passed">
+                        <div class="stat-number passed">{{PASSED_CONTROLS}}</div>
+                        <div class="stat-label">Passed</div>
+                    </div>
+                    <div class="stat-card failed">
+                        <div class="stat-number failed">{{FAILED_CONTROLS}}</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                    <div class="stat-card error">
+                        <div class="stat-number error">{{ERROR_CONTROLS}}</div>
+                        <div class="stat-label">Errors</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Controls Section -->
+        <main class="controls-section">
+            <h2 class="section-title">📋 Security Controls Details</h2>
+            {{CONTROLS_CONTENT}}
+        </main>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Microsoft 365 Security Assessment Tool</p>
+            <p>Generated on {{ASSESSMENT_DATE}}</p>
+            <p class="timestamp">Report ID: {{REPORT_ID}}</p>
+        </footer>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="scripts.js"></script>
+</body>
+</html>

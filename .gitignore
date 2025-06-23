@@ -1,0 +1,298 @@
+# Microsoft 365 Security Posture Assessment Tool (M365SPAT)
+# .gitignore file
+
+# ================================
+# Security and Credentials
+# ================================
+# Never commit secrets, certificates, or sensitive data
+*.pfx
+*.p12
+*.key
+*.pem
+*.crt
+*.cer
+*secrets*
+*credential*
+*password*
+*token*
+appsettings.json
+config.json
+.env
+.env.*
+
+# Azure AD App Registration files
+ClientSecret.txt
+certificate.pfx
+app-registration.json
+
+# Assessment configuration with sensitive data
+SecurityControls-Custom.json
+TenantConfig.json
+
+# ================================
+# Generated Reports and Logs
+# ================================
+# Generated assessment reports (exclude from repo, but keep structure)
+reports/*.json
+reports/*.html
+reports/*.csv
+reports/*.xml
+!reports/README.md
+!reports/.gitkeep
+
+# Log files
+*.log
+logs/
+*.tmp
+*.temp
+
+# PowerShell transcript files
+PowerShell_transcript*.txt
+
+# ================================
+# Development and IDE
+# ================================
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.sln.docstates
+bin/
+obj/
+
+# PowerShell ISE
+*.ps1xml
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ================================
+# Operating System Files
+# ================================
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ================================
+# PowerShell Specific
+# ================================
+# PowerShell modules cache
+PSGetModuleInfo.xml
+
+# PowerShell debugging files
+*.orig
+*.rej
+
+# PowerShell profile backups
+profile.ps1.bak
+
+# ================================
+# Assessment Data and Cache
+# ================================
+# Temporary assessment data
+temp/
+cache/
+.cache/
+
+# Downloaded modules or dependencies
+modules/
+dependencies/
+
+# Backup files
+backup/
+*.bak
+*.backup
+
+# ================================
+# Documentation Build
+# ================================
+# Generated documentation
+docs/_build/
+docs/build/
+site/
+
+# Markdown temporary files
+*.md.bak
+*.md~
+
+# ================================
+# Testing and Coverage
+# ================================
+# Test results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# Pester test results
+*.TestResults.xml
+TestsResults.xml
+
+# ================================
+# Package Managers
+# ================================
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# npm (if using any Node.js tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ================================
+# Custom Assessment Files
+# ================================
+# Custom control definitions (may contain sensitive info)
+Custom-SecurityControls.json
+Organization-Specific-Controls.json
+
+# Client-specific configurations
+client-configs/
+tenant-specific/
+
+# Assessment archives
+archives/
+assessment-history/
+
+# ================================
+# Certificates and Keys
+# ================================
+# All certificate formats
+*.p7b
+*.p7c
+*.p7m
+*.p7s
+*.keystore
+*.jks
+*.pkcs12
+
+# Private keys
+*private*key*
+*privatekey*
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+
+# ================================
+# Temporary and Runtime Files
+# ================================
+# Temporary directories
+tmp/
+temp/
+.tmp/
+.temp/
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+
+# ================================
+# Compressed Files
+# ================================
+# Archives that might contain sensitive data
+*.zip
+*.rar
+*.tar
+*.gz
+*.bz2
+*.7z
+*.xz
+
+# Exception: Keep sample files and documentation
+!docs/samples/**
+!examples/**
+!templates/**
+
+# ================================
+# Database Files
+# ================================
+# Local databases that might store assessment results
+*.db
+*.sqlite
+*.sqlite3
+*.mdb
+*.accdb
+
+# ================================
+# Microsoft Office Temporary Files
+# ================================
+~$*
+*.tmp
+*.temp
+
+# Excel files that might contain sensitive assessment data
+*.xlsx
+*.xls
+!templates/*.xlsx
+!examples/*.xlsx
+
+# Word files that might contain sensitive information
+*.docx
+*.doc
+!templates/*.docx
+!documentation/*.docx
+
+# ================================
+# Custom Additions
+# ================================
+# Add any organization-specific patterns below
+# Example:
+# *company-name*
+# *organization-specific*
+
+# Local development overrides
+local-settings.json
+dev-config.ps1
+test-tenant-config.json

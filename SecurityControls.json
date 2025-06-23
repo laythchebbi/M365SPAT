@@ -1,0 +1,895 @@
+{
+  "version": "3.0",
+  "description": "Microsoft 365 Identity Security Controls with Simple and Technical Explanations - Part 1",
+  "last_updated": "2025-06-23",
+  "category": "Identity and Access Management",
+  "controls": [
+    {
+      "id": "IAM-AUTH-001",
+      "name": "Multi-Factor Authentication Enforcement",
+      "description": "Verify that MFA is enforced for all users through Conditional Access policies",
+      "category": "Authentication",
+      "severity": "Critical",
+      "type": "graph_api",
+      "endpoint": "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies",
+      "method": "GET",
+      "required_scopes": ["Policy.Read.All"],
+      "evaluation": "($data.value | Where-Object { $_.state -eq 'enabled' -and ($_.grantControls.builtInControls -contains 'mfa' -or $_.grantControls.builtInControls -contains 'requireMultifactorAuthentication') }).Count -gt 0",
+      "pass_message": "MFA Conditional Access policies are properly configured and enabled",
+      "fail_message": "No active MFA enforcement policies found - critical security gap",
+      "remediation": "Create Conditional Access policy requiring MFA for all users and applications",
+      "resources_endpoint": "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies?$filter=state eq 'enabled'",
+      "simple_explanation": {
+        "what_was_checked": "We checked if your organization requires all users to use multi-factor authentication (like a phone app or text message) when logging in.",
+        "why_it_matters": "Multi-factor authentication is one of the most effective ways to prevent account takeovers. Without it, stolen passwords can give attackers full access to your systems and data.",
+        "pass_explanation": {
+          "what_was_found": "Multi-factor authentication is properly required for users through security policies.",
+          "plain_english_result": "✅ Excellent! This critical security measure is working properly.",
+          "risk_level": "Low Risk - Well Protected",
+          "user_impact": "Users will have secure login processes that protect their accounts and company data."
+        },
+        "fail_explanation": {
+          "what_was_found": "Multi-factor authentication is not required for all users - this is a significant security gap.",
+          "plain_english_result": "🚨 Action Required! This is a critical security issue that needs immediate attention.",
+          "risk_level": "Very High Risk - Immediate Action Needed",
+          "user_impact": "Users' accounts are vulnerable to takeover if passwords are stolen. Company data could be accessed by unauthorized people."
+        },
+        "error_explanation": {
+          "what_was_found": "We couldn't check this setting due to insufficient permissions or configuration issues.",
+          "plain_english_result": "❓ We couldn't complete this check. This might be due to licensing or permission limitations.",
+          "risk_level": "Unknown - Unable to Assess",
+          "user_impact": "The impact on users depends on the actual MFA configuration, which we couldn't verify."
+        }
+      },
+      "technical_explanation": {
+        "required_licenses": [
+          "Azure AD Premium P1 (minimum)",
+          "Azure AD Premium P2 (recommended)",
+          "Microsoft 365 E3 or higher",
+          "Office 365 E3 with Azure AD Premium P1 add-on"
+        ],
+        "required_permissions": [
+          "Policy.Read.All - To read Conditional Access policies",
+          "Directory.Read.All - To read directory objects",
+          "Application.Read.All - For application-scoped policies"
+        ],
+        "affected_system_components": [
+          "Azure Active Directory Conditional Access",
+          "Microsoft Authentication Library (MSAL)",
+          "Azure AD Identity Protection (if enabled)",
+          "Third-party identity providers (if federated)",
+          "Office 365 services authentication flows"
+        ],
+        "technical_remediation": "1. Navigate to Azure AD Admin Center > Security > Conditional Access\n2. Create new policy: 'Require MFA for All Users'\n3. Assignments: Users/Groups = All users, Cloud apps = All cloud apps\n4. Access controls: Grant = Require multi-factor authentication\n5. Enable policy and test with pilot group first\n6. Monitor policy effectiveness and user impact\n7. Create exclusions for emergency access accounts\n8. Document policy configuration and business justification",
+        "related_documentation": [
+          {
+            "title": "Plan a Conditional Access deployment",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/conditional-access/plan-conditional-access"
+          },
+          {
+            "title": "Common Conditional Access policies",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/conditional-access/concept-conditional-access-policy-common"
+          },
+          {
+            "title": "Azure MFA deployment guide",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/authentication/howto-mfa-getstarted"
+          }
+        ],
+        "configuration_paths": [
+          "Azure Portal > Azure Active Directory > Security > Conditional Access > Policies",
+          "Microsoft 365 Admin Center > Security > Conditional Access",
+          "Azure AD Admin Center > Protection > Conditional Access",
+          "PowerShell: Connect-AzureAD; Get-AzureADMSConditionalAccessPolicy"
+        ],
+        "powershell_commands": [
+          "# Connect to Azure AD\nConnect-AzureAD\n\n# Get all Conditional Access policies\nGet-AzureADMSConditionalAccessPolicy | Select-Object DisplayName, State, Id",
+          "# Get MFA-enabled policies\nGet-AzureADMSConditionalAccessPolicy | Where-Object {$_.GrantControls.BuiltInControls -contains 'mfa'} | Select-Object DisplayName, State"
+        ],
+        "rest_api_examples": [
+          {
+            "description": "List all Conditional Access policies",
+            "method": "GET",
+            "endpoint": "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies",
+            "response_sample": "{\n  \"value\": [\n    {\n      \"id\": \"12345678-1234-1234-1234-123456789012\",\n      \"displayName\": \"Require MFA for All Users\",\n      \"state\": \"enabled\",\n      \"grantControls\": {\n        \"operator\": \"OR\",\n        \"builtInControls\": [\"mfa\"]\n      }\n    }\n  ]\n}"
+          }
+        ],
+        "security_implications": "Lack of MFA enforcement creates a single point of failure in authentication. Password-only authentication is vulnerable to credential stuffing, password spraying, phishing attacks, and social engineering.",
+        "implementation_complexity": "Medium - Requires careful planning for user rollout and comprehensive user training. Consider pilot deployment and gradual rollout strategy.",
+        "estimated_time_to_remediate": "2-4 weeks for full deployment including planning, pilot testing, and gradual rollout with user communications and training"
+      },
+      "cis_control": "CIS 5.1.1",
+      "nist_control": "IA-2(1)"
+    },
+    {
+      "id": "IAM-AUTH-002",
+      "name": "Privileged User MFA Enforcement",
+      "description": "Verify that all privileged users have MFA enabled and enforced",
+      "category": "Authentication",
+      "severity": "Critical",
+      "type": "graph_api",
+      "endpoint": "https://graph.microsoft.com/v1.0/directoryRoles?$expand=members",
+      "method": "GET",
+      "required_scopes": ["RoleManagement.Read.Directory", "User.Read.All"],
+      "evaluation": "$privilegedRoles = $data.value | Where-Object { $_.displayName -in @('Global Administrator', 'Privileged Role Administrator', 'Security Administrator', 'Conditional Access Administrator', 'Exchange Administrator') }; $totalPrivilegedUsers = ($privilegedRoles | ForEach-Object { $_.members }).Count; $totalPrivilegedUsers -gt 0",
+      "pass_message": "Privileged accounts are properly identified for MFA verification",
+      "fail_message": "Unable to verify privileged account MFA status",
+      "remediation": "Enable MFA for all privileged accounts and create specific CA policies",
+      "resources_endpoint": "https://graph.microsoft.com/v1.0/directoryRoles?$expand=members",
+      "simple_explanation": {
+        "what_was_checked": "We checked if your administrators and other privileged users are required to use multi-factor authentication.",
+        "why_it_matters": "Administrative accounts have access to everything in your organization. If these accounts are compromised, attackers can steal data, install malware, or shut down your systems.",
+        "pass_explanation": {
+          "what_was_found": "Privileged users are identified and should have multi-factor authentication requirements.",
+          "plain_english_result": "✅ Good! Privileged accounts are properly identified for MFA enforcement.",
+          "risk_level": "Low Risk - Well Protected",
+          "user_impact": "Administrators will have secure login processes that protect critical company systems."
+        },
+        "fail_explanation": {
+          "what_was_found": "We couldn't verify that privileged users have proper MFA requirements.",
+          "plain_english_result": "⚠️ Important! Privileged account protection needs verification.",
+          "risk_level": "High Risk - Address Soon",
+          "user_impact": "Administrative accounts may be vulnerable to takeover, putting all company systems at risk."
+        },
+        "error_explanation": {
+          "what_was_found": "We couldn't access privileged user information due to permission restrictions.",
+          "plain_english_result": "❓ Unable to verify privileged account security.",
+          "risk_level": "Unknown - Unable to Assess",
+          "user_impact": "Cannot determine the security status of administrative accounts."
+        }
+      },
+      "technical_explanation": {
+        "required_licenses": [
+          "Azure AD Premium P1 (minimum for CA policies)",
+          "Azure AD Premium P2 (recommended for PIM and advanced features)",
+          "Microsoft 365 E5 (includes Azure AD Premium P2)",
+          "Enterprise Mobility + Security E5"
+        ],
+        "required_permissions": [
+          "RoleManagement.Read.Directory - To read directory role assignments",
+          "User.Read.All - To read user properties and MFA status",
+          "Policy.Read.All - To verify CA policies affecting privileged users",
+          "AuditLog.Read.All - To review privileged access audit logs"
+        ],
+        "affected_system_components": [
+          "Azure AD Privileged Identity Management (PIM)",
+          "Azure AD Conditional Access",
+          "Azure AD Identity Protection",
+          "Azure AD role management",
+          "Emergency access procedures"
+        ],
+        "technical_remediation": "1. Create dedicated CA policy for privileged users\n2. Target: Directory roles (Global Admin, Security Admin, etc.)\n3. Conditions: All cloud apps, any location, any device state\n4. Controls: Require MFA + compliant device + approved client app\n5. Consider implementing Azure AD PIM for just-in-time access\n6. Set up emergency access (break-glass) accounts with different MFA methods",
+        "related_documentation": [
+          {
+            "title": "Securing privileged access overview",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/roles/security-planning"
+          },
+          {
+            "title": "Azure AD Privileged Identity Management",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/privileged-identity-management/"
+          }
+        ],
+        "configuration_paths": [
+          "Azure Portal > Azure AD > Roles and administrators",
+          "Azure Portal > Azure AD > Security > Conditional Access",
+          "Azure Portal > Azure AD > Privileged Identity Management"
+        ],
+        "powershell_commands": [
+          "# Get all directory roles and their members\nGet-AzureADDirectoryRole | ForEach-Object {\n    $role = $_\n    $members = Get-AzureADDirectoryRoleMember -ObjectId $role.ObjectId\n    foreach ($member in $members) {\n        [PSCustomObject]@{\n            RoleName = $role.DisplayName\n            MemberName = $member.DisplayName\n            MemberUPN = $member.UserPrincipalName\n        }\n    }\n}"
+        ],
+        "rest_api_examples": [
+          {
+            "description": "Get directory roles with members",
+            "method": "GET",
+            "endpoint": "https://graph.microsoft.com/v1.0/directoryRoles?$expand=members",
+            "response_sample": "{\n  \"value\": [\n    {\n      \"id\": \"role-id\",\n      \"displayName\": \"Global Administrator\",\n      \"members\": [\n        {\n          \"id\": \"user-id\",\n          \"displayName\": \"John Admin\",\n          \"userPrincipalName\": \"john.admin@contoso.com\"\n        }\n      ]\n    }\n  ]\n}"
+          }
+        ],
+        "security_implications": "Privileged account compromise represents the highest risk scenario for organizations. These accounts are primary targets for advanced persistent threats (APTs) and nation-state actors.",
+        "implementation_complexity": "High - Requires careful coordination with administrative users and comprehensive testing of emergency access procedures.",
+        "estimated_time_to_remediate": "1-2 weeks for basic CA policy implementation, 4-6 weeks for full PIM deployment with comprehensive training"
+      },
+      "cis_control": "CIS 5.1.2",
+      "nist_control": "IA-2(1)"
+    },
+    {
+      "id": "IAM-AUTH-003",
+      "name": "MFA Registration Campaign",
+      "description": "Verify MFA registration status across all users",
+      "category": "Authentication", 
+      "severity": "High",
+      "type": "graph_api",
+      "endpoint": "https://graph.microsoft.com/beta/reports/credentialUserRegistrationDetails",
+      "method": "GET",
+      "required_scopes": ["Reports.Read.All"],
+      "evaluation": "$mfaRegistered = $data.value | Where-Object { $_.isMfaRegistered -eq $true }; $totalUsers = $data.value.Count; if($totalUsers -gt 0) { ($mfaRegistered.Count / $totalUsers) -ge 0.95 } else { $false }",
+      "pass_message": "MFA registration meets organizational requirements (95%+)",
+      "fail_message": "MFA registration below acceptable threshold",
+      "remediation": "Launch MFA registration campaign and implement nudging policies",
+      "resources_endpoint": "https://graph.microsoft.com/beta/reports/credentialUserRegistrationDetails?$filter=isMfaRegistered eq false",
+      "simple_explanation": {
+        "what_was_checked": "We checked how many of your users have set up multi-factor authentication on their accounts.",
+        "why_it_matters": "Even if MFA is required, users need to actually set it up on their devices. Low registration rates mean many accounts are still vulnerable.",
+        "pass_explanation": {
+          "what_was_found": "A good percentage of users have set up multi-factor authentication (95% or higher).",
+          "plain_english_result": "✅ Great! Most users have completed their MFA setup.",
+          "risk_level": "Low Risk - Well Protected",
+          "user_impact": "Most users are protected with secure login methods."
+        },
+        "fail_explanation": {
+          "what_was_found": "Too few users have set up multi-factor authentication, leaving many accounts vulnerable.",
+          "plain_english_result": "⚠️ Important! More users need to complete their MFA setup.",
+          "risk_level": "High Risk - Address Soon",
+          "user_impact": "Many users' accounts are at risk because they haven't set up multi-factor authentication."
+        },
+        "error_explanation": {
+          "what_was_found": "We couldn't retrieve MFA registration statistics.",
+          "plain_english_result": "❓ Unable to check MFA registration rates.",
+          "risk_level": "Unknown - Unable to Assess",
+          "user_impact": "Cannot determine how many users have completed MFA setup."
+        }
+      },
+      "technical_explanation": {
+        "required_licenses": [
+          "Azure AD Premium P1 (for detailed reporting and campaigns)",
+          "Office 365 E3 or higher",
+          "Microsoft 365 Business Premium or higher"
+        ],
+        "required_permissions": [
+          "Reports.Read.All - To access authentication method reports",
+          "AuditLog.Read.All - For detailed registration events and tracking",
+          "UserAuthenticationMethod.Read.All - For per-user method details"
+        ],
+        "affected_system_components": [
+          "Azure AD Authentication Methods Policy",
+          "Microsoft Authenticator app",
+          "SMS/Voice providers",
+          "Combined security information registration portal"
+        ],
+        "technical_remediation": "1. Enable MFA registration enforcement in Azure AD Authentication Methods Policy\n2. Configure registration nudging policies with appropriate grace periods\n3. Set up combined security info registration experience\n4. Deploy Microsoft Authenticator via Intune configuration policies\n5. Create comprehensive user training materials and video tutorials",
+        "related_documentation": [
+          {
+            "title": "Plan an Azure MFA deployment",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/authentication/howto-mfa-getstarted"
+          },
+          {
+            "title": "Combined security information registration",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/authentication/concept-registration-mfa-sspr-combined"
+          }
+        ],
+        "configuration_paths": [
+          "Azure Portal > Azure AD > Security > Authentication methods > Activity",
+          "Azure Portal > Azure AD > Users > Authentication methods"
+        ],
+        "powershell_commands": [
+          "# Get MFA registration details via Microsoft Graph\nConnect-MgGraph -Scopes 'Reports.Read.All'\nGet-MgReportCredentialUserRegistrationDetail | Select-Object UserPrincipalName, IsMfaRegistered, MethodsRegistered"
+        ],
+        "rest_api_examples": [
+          {
+            "description": "Get user registration details",
+            "method": "GET",
+            "endpoint": "https://graph.microsoft.com/beta/reports/credentialUserRegistrationDetails",
+            "response_sample": "{\n  \"value\": [\n    {\n      \"userPrincipalName\": \"user@domain.com\",\n      \"isMfaRegistered\": true,\n      \"methodsRegistered\": [\"mobilePhone\", \"microsoftAuthenticatorPush\"]\n    }\n  ]\n}"
+          }
+        ],
+        "security_implications": "Low MFA registration rates create significant security gaps even when MFA policies are technically enabled. Unregistered users represent the weakest links in the authentication chain.",
+        "implementation_complexity": "Medium - Requires comprehensive user communication strategy and help desk preparation.",
+        "estimated_time_to_remediate": "4-8 weeks for full campaign including planning, communication strategy, and user registration period"
+      },
+      "cis_control": "CIS 5.1.3"
+    },
+    {
+      "id": "IAM-AUTH-004",
+      "name": "Legacy Authentication Blocking",
+      "description": "Verify that legacy authentication protocols are blocked",
+      "category": "Authentication",
+      "severity": "Critical",
+      "type": "graph_api",
+      "endpoint": "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies",
+      "method": "GET",
+      "required_scopes": ["Policy.Read.All"],
+      "evaluation": "($data.value | Where-Object { $_.state -eq 'enabled' -and $_.conditions.clientAppTypes -contains 'exchangeActiveSync' -and $_.conditions.clientAppTypes -contains 'other' -and $_.grantControls.builtInControls -contains 'block' }).Count -gt 0",
+      "pass_message": "Legacy authentication is properly blocked",
+      "fail_message": "Legacy authentication not blocked - security vulnerability exists",
+      "remediation": "Create CA policy to block legacy authentication protocols",
+      "resources_endpoint": "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies?$filter=state eq 'enabled'",
+      "simple_explanation": {
+        "what_was_checked": "We checked if your organization blocks old, less secure ways of connecting to email and other services.",
+        "why_it_matters": "Old authentication methods have security flaws that can't support modern protections like multi-factor authentication. Attackers often exploit these weaknesses.",
+        "pass_explanation": {
+          "what_was_found": "Old authentication methods are blocked, preventing less secure connections.",
+          "plain_english_result": "✅ Excellent! Legacy authentication vulnerabilities are blocked.",
+          "risk_level": "Low Risk - Well Protected",
+          "user_impact": "Users must use modern, secure applications to access company services."
+        },
+        "fail_explanation": {
+          "what_was_found": "Old, insecure authentication methods are still allowed, creating security risks.",
+          "plain_english_result": "🚨 Critical! Old authentication methods create serious security vulnerabilities.",
+          "risk_level": "Very High Risk - Immediate Action Needed",
+          "user_impact": "Attackers could use old vulnerabilities to access email and other services without proper authentication."
+        },
+        "error_explanation": {
+          "what_was_found": "We couldn't verify if legacy authentication is blocked.",
+          "plain_english_result": "❓ Unable to check legacy authentication settings.",
+          "risk_level": "Unknown - Unable to Assess",
+          "user_impact": "Cannot determine if old authentication vulnerabilities are protected against."
+        }
+      },
+      "technical_explanation": {
+        "required_licenses": [
+          "Azure AD Premium P1 (minimum for Conditional Access)",
+          "Office 365 E3 or higher",
+          "Microsoft 365 Business Premium or higher"
+        ],
+        "required_permissions": [
+          "Policy.Read.All - To read Conditional Access policies",
+          "Policy.ReadWrite.ConditionalAccess - To create/modify blocking policies"
+        ],
+        "affected_system_components": [
+          "Exchange Online (POP3, IMAP4, SMTP Auth, ActiveSync)",
+          "SharePoint Online",
+          "Office 365 legacy clients",
+          "Third-party email clients using basic authentication"
+        ],
+        "technical_remediation": "1. Inventory all applications using legacy authentication\n2. Update or replace applications to support modern authentication\n3. Create Conditional Access policy: 'Block Legacy Authentication'\n4. Target: All users, Cloud apps: All cloud apps\n5. Conditions: Client apps = Exchange ActiveSync, Other clients\n6. Access controls: Block access\n7. Enable policy in report-only mode first for impact assessment",
+        "related_documentation": [
+          {
+            "title": "Block legacy authentication with Conditional Access",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/conditional-access/block-legacy-authentication"
+          }
+        ],
+        "configuration_paths": [
+          "Azure Portal > Azure AD > Security > Conditional Access > New policy"
+        ],
+        "powershell_commands": [
+          "# Check for existing legacy auth blocking policies\nGet-AzureADMSConditionalAccessPolicy | Where-Object {\n    $_.Conditions.ClientAppTypes -contains 'other' -or \n    $_.Conditions.ClientAppTypes -contains 'exchangeActiveSync'\n} | Select-Object DisplayName, State, Id"
+        ],
+        "rest_api_examples": [
+          {
+            "description": "Create legacy authentication blocking policy",
+            "method": "POST",
+            "endpoint": "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies",
+            "request_body": "{\n  \"displayName\": \"Block Legacy Authentication\",\n  \"state\": \"enabledForReportingButNotEnforced\",\n  \"conditions\": {\n    \"clientAppTypes\": [\"exchangeActiveSync\", \"other\"]\n  },\n  \"grantControls\": {\n    \"builtInControls\": [\"block\"]\n  }\n}"
+          }
+        ],
+        "security_implications": "Legacy authentication protocols fundamentally bypass modern security controls. These protocols are vulnerable to password spraying, credential stuffing, and man-in-the-middle attacks.",
+        "implementation_complexity": "High - Requires comprehensive application inventory and extensive user impact assessment.",
+        "estimated_time_to_remediate": "6-12 weeks for comprehensive implementation including application discovery, updates, and phased policy deployment"
+      },
+      "cis_control": "CIS 1.1.3",
+      "nist_control": "IA-2(8)"
+    },
+    {
+      "id": "IAM-AUTH-005",
+      "name": "Passwordless Authentication Configuration",
+      "description": "Verify passwordless authentication methods are available and promoted",
+      "category": "Authentication",
+      "severity": "Medium",
+      "type": "graph_api",
+      "endpoint": "https://graph.microsoft.com/v1.0/policies/authenticationMethodsPolicy",
+      "method": "GET",
+      "required_scopes": ["Policy.Read.All"],
+      "evaluation": "$fido2Enabled = $data.authenticationMethodConfigurations | Where-Object { $_.id -eq 'Fido2' -and $_.state -eq 'enabled' }; $whfbEnabled = $data.authenticationMethodConfigurations | Where-Object { $_.id -eq 'MicrosoftAuthenticator' -and $_.state -eq 'enabled' }; ($fido2Enabled -ne $null) -or ($whfbEnabled -ne $null)",
+      "pass_message": "Passwordless authentication is properly configured",
+      "fail_message": "Passwordless authentication not enabled",
+      "remediation": "Enable and configure FIDO2 and Windows Hello for Business",
+      "resources_endpoint": "https://graph.microsoft.com/v1.0/policies/authenticationMethodsPolicy/authenticationMethodConfigurations",
+      "simple_explanation": {
+        "what_was_checked": "We checked if users can log in without passwords using modern security methods like fingerprints, face recognition, or security keys.",
+        "why_it_matters": "Passwordless authentication is more secure and convenient than passwords. It eliminates the risk of password theft while making login easier for users.",
+        "pass_explanation": {
+          "what_was_found": "Modern passwordless authentication methods are available for users.",
+          "plain_english_result": "✅ Great! Users can use secure, password-free login methods.",
+          "risk_level": "Low Risk - Well Protected",
+          "user_impact": "Users can log in securely using fingerprints, face recognition, or security keys instead of passwords."
+        },
+        "fail_explanation": {
+          "what_was_found": "Passwordless authentication options are not available to users.",
+          "plain_english_result": "⚠️ Consider enabling passwordless authentication for better security and user experience.",
+          "risk_level": "Medium Risk - Improve When Possible",
+          "user_impact": "Users must rely on passwords, which are less secure and convenient than modern alternatives."
+        },
+        "error_explanation": {
+          "what_was_found": "We couldn't check passwordless authentication settings.",
+          "plain_english_result": "❓ Unable to verify passwordless authentication availability.",
+          "risk_level": "Unknown - Unable to Assess",
+          "user_impact": "Cannot determine what login options are available to users."
+        }
+      },
+      "technical_explanation": {
+        "required_licenses": [
+          "Azure AD Premium P1 (for FIDO2 security keys)",
+          "Azure AD Premium P2 (for advanced passwordless features)",
+          "Windows 10/11 Pro or Enterprise (for Windows Hello for Business)"
+        ],
+        "required_permissions": [
+          "Policy.Read.All - To read authentication methods policy",
+          "Policy.ReadWrite.AuthenticationMethod - To configure passwordless methods"
+        ],
+        "affected_system_components": [
+          "Azure AD Authentication Methods Policy",
+          "Windows Hello for Business infrastructure",
+          "FIDO2 security key providers",
+          "Microsoft Authenticator app"
+        ],
+        "technical_remediation": "1. Enable FIDO2 security keys in Azure AD Authentication Methods Policy\n2. Configure Windows Hello for Business via Group Policy or Intune\n3. Enable Microsoft Authenticator passwordless phone sign-in\n4. Set up device compliance requirements for passwordless methods",
+        "related_documentation": [
+          {
+            "title": "Enable passwordless security key sign-in",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/authentication/howto-authentication-passwordless-security-key"
+          }
+        ],
+        "configuration_paths": [
+          "Azure Portal > Azure AD > Security > Authentication methods > FIDO2 security key"
+        ],
+        "powershell_commands": [
+          "# Get authentication methods policy\nGet-MgPolicyAuthenticationMethodPolicy"
+        ],
+        "rest_api_examples": [
+          {
+            "description": "Get authentication methods policy",
+            "method": "GET",
+            "endpoint": "https://graph.microsoft.com/v1.0/policies/authenticationMethodsPolicy",
+            "response_sample": "{\n  \"authenticationMethodConfigurations\": [\n    {\n      \"id\": \"Fido2\",\n      \"state\": \"enabled\"\n    }\n  ]\n}"
+          }
+        ],
+        "security_implications": "Passwordless authentication eliminates password-based attack vectors and provides stronger security assurance through biometrics or hardware tokens.",
+        "implementation_complexity": "High - Requires device compatibility assessment, user training, and hardware procurement for FIDO2 keys.",
+        "estimated_time_to_remediate": "3-6 months for full deployment including device assessment, hardware procurement, and user training"
+      },
+      "cis_control": "CIS 5.1.4"
+
+},
+
+    {
+      "id": "IAM-AUTH-001",
+      "name": "Multi-Factor Authentication Enforcement",
+      "description": "Verify that MFA is enforced for all users through Conditional Access policies",
+      "category": "Authentication",
+      "severity": "Critical",
+      "type": "graph_api",
+      "endpoint": "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies",
+      "method": "GET",
+      "required_scopes": ["Policy.Read.All"],
+      "evaluation": "($data.value | Where-Object { $_.state -eq 'enabled' -and ($_.grantControls.builtInControls -contains 'mfa' -or $_.grantControls.builtInControls -contains 'requireMultifactorAuthentication') }).Count -gt 0",
+      "pass_message": "MFA Conditional Access policies are properly configured and enabled",
+      "fail_message": "No active MFA enforcement policies found - critical security gap",
+      "remediation": "Create Conditional Access policy requiring MFA for all users and applications",
+      "resources_endpoint": "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies?$filter=state eq 'enabled'",
+      "simple_explanation": {
+        "what_was_checked": "We checked if your organization requires all users to use multi-factor authentication (like a phone app or text message) when logging in.",
+        "why_it_matters": "Multi-factor authentication is one of the most effective ways to prevent account takeovers. Without it, stolen passwords can give attackers full access to your systems and data.",
+        "pass_explanation": {
+          "what_was_found": "Multi-factor authentication is properly required for users through security policies.",
+          "plain_english_result": "✅ Excellent! This critical security measure is working properly.",
+          "risk_level": "Low Risk - Well Protected",
+          "user_impact": "Users will have secure login processes that protect their accounts and company data."
+        },
+        "fail_explanation": {
+          "what_was_found": "Multi-factor authentication is not required for all users - this is a significant security gap.",
+          "plain_english_result": "🚨 Action Required! This is a critical security issue that needs immediate attention.",
+          "risk_level": "Very High Risk - Immediate Action Needed",
+          "user_impact": "Users' accounts are vulnerable to takeover if passwords are stolen. Company data could be accessed by unauthorized people."
+        },
+        "error_explanation": {
+          "what_was_found": "We couldn't check this setting due to insufficient permissions or configuration issues.",
+          "plain_english_result": "❓ We couldn't complete this check. This might be due to licensing or permission limitations.",
+          "risk_level": "Unknown - Unable to Assess",
+          "user_impact": "The impact on users depends on the actual MFA configuration, which we couldn't verify."
+        }
+      },
+      "technical_explanation": {
+        "required_licenses": [
+          "Azure AD Premium P1 (minimum)",
+          "Azure AD Premium P2 (recommended)",
+          "Microsoft 365 E3 or higher",
+          "Office 365 E3 with Azure AD Premium P1 add-on"
+        ],
+        "required_permissions": [
+          "Policy.Read.All - To read Conditional Access policies",
+          "Directory.Read.All - To read directory objects",
+          "Application.Read.All - For application-scoped policies"
+        ],
+        "affected_system_components": [
+          "Azure Active Directory Conditional Access",
+          "Microsoft Authentication Library (MSAL)",
+          "Azure AD Identity Protection (if enabled)",
+          "Third-party identity providers (if federated)",
+          "Office 365 services authentication flows"
+        ],
+        "technical_remediation": "1. Navigate to Azure AD Admin Center > Security > Conditional Access\n2. Create new policy: 'Require MFA for All Users'\n3. Assignments: Users/Groups = All users, Cloud apps = All cloud apps\n4. Access controls: Grant = Require multi-factor authentication\n5. Enable policy and test with pilot group first\n6. Monitor policy effectiveness and user impact\n7. Create exclusions for emergency access accounts\n8. Document policy configuration and business justification",
+        "related_documentation": [
+          {
+            "title": "Plan a Conditional Access deployment",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/conditional-access/plan-conditional-access"
+          },
+          {
+            "title": "Common Conditional Access policies",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/conditional-access/concept-conditional-access-policy-common"
+          },
+          {
+            "title": "Azure MFA deployment guide",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/authentication/howto-mfa-getstarted"
+          }
+        ],
+        "configuration_paths": [
+          "Azure Portal > Azure Active Directory > Security > Conditional Access > Policies",
+          "Microsoft 365 Admin Center > Security > Conditional Access",
+          "Azure AD Admin Center > Protection > Conditional Access",
+          "PowerShell: Connect-AzureAD; Get-AzureADMSConditionalAccessPolicy"
+        ],
+        "powershell_commands": [
+          "# Connect to Azure AD\nConnect-AzureAD\n\n# Get all Conditional Access policies\nGet-AzureADMSConditionalAccessPolicy | Select-Object DisplayName, State, Id",
+          "# Get MFA-enabled policies\nGet-AzureADMSConditionalAccessPolicy | Where-Object {$_.GrantControls.BuiltInControls -contains 'mfa'} | Select-Object DisplayName, State"
+        ],
+        "rest_api_examples": [
+          {
+            "description": "List all Conditional Access policies",
+            "method": "GET",
+            "endpoint": "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies",
+            "response_sample": "{\n  \"value\": [\n    {\n      \"id\": \"12345678-1234-1234-1234-123456789012\",\n      \"displayName\": \"Require MFA for All Users\",\n      \"state\": \"enabled\",\n      \"grantControls\": {\n        \"operator\": \"OR\",\n        \"builtInControls\": [\"mfa\"]\n      }\n    }\n  ]\n}"
+          }
+        ],
+        "security_implications": "Lack of MFA enforcement creates a single point of failure in authentication. Password-only authentication is vulnerable to credential stuffing, password spraying, phishing attacks, and social engineering.",
+        "implementation_complexity": "Medium - Requires careful planning for user rollout and comprehensive user training. Consider pilot deployment and gradual rollout strategy.",
+        "estimated_time_to_remediate": "2-4 weeks for full deployment including planning, pilot testing, and gradual rollout with user communications and training"
+      },
+      "cis_control": "CIS 5.1.1",
+      "nist_control": "IA-2(1)"
+    },
+    {
+      "id": "IAM-AUTH-002",
+      "name": "Privileged User MFA Enforcement",
+      "description": "Verify that all privileged users have MFA enabled and enforced",
+      "category": "Authentication",
+      "severity": "Critical",
+      "type": "graph_api",
+      "endpoint": "https://graph.microsoft.com/v1.0/directoryRoles?$expand=members",
+      "method": "GET",
+      "required_scopes": ["RoleManagement.Read.Directory", "User.Read.All"],
+      "evaluation": "$privilegedRoles = $data.value | Where-Object { $_.displayName -in @('Global Administrator', 'Privileged Role Administrator', 'Security Administrator', 'Conditional Access Administrator', 'Exchange Administrator') }; $totalPrivilegedUsers = ($privilegedRoles | ForEach-Object { $_.members }).Count; $totalPrivilegedUsers -gt 0",
+      "pass_message": "Privileged accounts are properly identified for MFA verification",
+      "fail_message": "Unable to verify privileged account MFA status",
+      "remediation": "Enable MFA for all privileged accounts and create specific CA policies",
+      "resources_endpoint": "https://graph.microsoft.com/v1.0/directoryRoles?$expand=members",
+      "simple_explanation": {
+        "what_was_checked": "We checked if your administrators and other privileged users are required to use multi-factor authentication.",
+        "why_it_matters": "Administrative accounts have access to everything in your organization. If these accounts are compromised, attackers can steal data, install malware, or shut down your systems.",
+        "pass_explanation": {
+          "what_was_found": "Privileged users are identified and should have multi-factor authentication requirements.",
+          "plain_english_result": "✅ Good! Privileged accounts are properly identified for MFA enforcement.",
+          "risk_level": "Low Risk - Well Protected",
+          "user_impact": "Administrators will have secure login processes that protect critical company systems."
+        },
+        "fail_explanation": {
+          "what_was_found": "We couldn't verify that privileged users have proper MFA requirements.",
+          "plain_english_result": "⚠️ Important! Privileged account protection needs verification.",
+          "risk_level": "High Risk - Address Soon",
+          "user_impact": "Administrative accounts may be vulnerable to takeover, putting all company systems at risk."
+        },
+        "error_explanation": {
+          "what_was_found": "We couldn't access privileged user information due to permission restrictions.",
+          "plain_english_result": "❓ Unable to verify privileged account security.",
+          "risk_level": "Unknown - Unable to Assess",
+          "user_impact": "Cannot determine the security status of administrative accounts."
+        }
+      },
+      "technical_explanation": {
+        "required_licenses": [
+          "Azure AD Premium P1 (minimum for CA policies)",
+          "Azure AD Premium P2 (recommended for PIM and advanced features)",
+          "Microsoft 365 E5 (includes Azure AD Premium P2)",
+          "Enterprise Mobility + Security E5"
+        ],
+        "required_permissions": [
+          "RoleManagement.Read.Directory - To read directory role assignments",
+          "User.Read.All - To read user properties and MFA status",
+          "Policy.Read.All - To verify CA policies affecting privileged users",
+          "AuditLog.Read.All - To review privileged access audit logs"
+        ],
+        "affected_system_components": [
+          "Azure AD Privileged Identity Management (PIM)",
+          "Azure AD Conditional Access",
+          "Azure AD Identity Protection",
+          "Azure AD role management",
+          "Emergency access procedures"
+        ],
+        "technical_remediation": "1. Create dedicated CA policy for privileged users\n2. Target: Directory roles (Global Admin, Security Admin, etc.)\n3. Conditions: All cloud apps, any location, any device state\n4. Controls: Require MFA + compliant device + approved client app\n5. Consider implementing Azure AD PIM for just-in-time access\n6. Set up emergency access (break-glass) accounts with different MFA methods",
+        "related_documentation": [
+          {
+            "title": "Securing privileged access overview",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/roles/security-planning"
+          },
+          {
+            "title": "Azure AD Privileged Identity Management",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/privileged-identity-management/"
+          }
+        ],
+        "configuration_paths": [
+          "Azure Portal > Azure AD > Roles and administrators",
+          "Azure Portal > Azure AD > Security > Conditional Access",
+          "Azure Portal > Azure AD > Privileged Identity Management"
+        ],
+        "powershell_commands": [
+          "# Get all directory roles and their members\nGet-AzureADDirectoryRole | ForEach-Object {\n    $role = $_\n    $members = Get-AzureADDirectoryRoleMember -ObjectId $role.ObjectId\n    foreach ($member in $members) {\n        [PSCustomObject]@{\n            RoleName = $role.DisplayName\n            MemberName = $member.DisplayName\n            MemberUPN = $member.UserPrincipalName\n        }\n    }\n}"
+        ],
+        "rest_api_examples": [
+          {
+            "description": "Get directory roles with members",
+            "method": "GET",
+            "endpoint": "https://graph.microsoft.com/v1.0/directoryRoles?$expand=members",
+            "response_sample": "{\n  \"value\": [\n    {\n      \"id\": \"role-id\",\n      \"displayName\": \"Global Administrator\",\n      \"members\": [\n        {\n          \"id\": \"user-id\",\n          \"displayName\": \"John Admin\",\n          \"userPrincipalName\": \"john.admin@contoso.com\"\n        }\n      ]\n    }\n  ]\n}"
+          }
+        ],
+        "security_implications": "Privileged account compromise represents the highest risk scenario for organizations. These accounts are primary targets for advanced persistent threats (APTs) and nation-state actors.",
+        "implementation_complexity": "High - Requires careful coordination with administrative users and comprehensive testing of emergency access procedures.",
+        "estimated_time_to_remediate": "1-2 weeks for basic CA policy implementation, 4-6 weeks for full PIM deployment with comprehensive training"
+      },
+      "cis_control": "CIS 5.1.2",
+      "nist_control": "IA-2(1)"
+    },
+    {
+      "id": "IAM-AUTH-003",
+      "name": "MFA Registration Campaign",
+      "description": "Verify MFA registration status across all users",
+      "category": "Authentication", 
+      "severity": "High",
+      "type": "graph_api",
+      "endpoint": "https://graph.microsoft.com/beta/reports/credentialUserRegistrationDetails",
+      "method": "GET",
+      "required_scopes": ["Reports.Read.All"],
+      "evaluation": "$mfaRegistered = $data.value | Where-Object { $_.isMfaRegistered -eq $true }; $totalUsers = $data.value.Count; if($totalUsers -gt 0) { ($mfaRegistered.Count / $totalUsers) -ge 0.95 } else { $false }",
+      "pass_message": "MFA registration meets organizational requirements (95%+)",
+      "fail_message": "MFA registration below acceptable threshold",
+      "remediation": "Launch MFA registration campaign and implement nudging policies",
+      "resources_endpoint": "https://graph.microsoft.com/beta/reports/credentialUserRegistrationDetails?$filter=isMfaRegistered eq false",
+      "simple_explanation": {
+        "what_was_checked": "We checked how many of your users have set up multi-factor authentication on their accounts.",
+        "why_it_matters": "Even if MFA is required, users need to actually set it up on their devices. Low registration rates mean many accounts are still vulnerable.",
+        "pass_explanation": {
+          "what_was_found": "A good percentage of users have set up multi-factor authentication (95% or higher).",
+          "plain_english_result": "✅ Great! Most users have completed their MFA setup.",
+          "risk_level": "Low Risk - Well Protected",
+          "user_impact": "Most users are protected with secure login methods."
+        },
+        "fail_explanation": {
+          "what_was_found": "Too few users have set up multi-factor authentication, leaving many accounts vulnerable.",
+          "plain_english_result": "⚠️ Important! More users need to complete their MFA setup.",
+          "risk_level": "High Risk - Address Soon",
+          "user_impact": "Many users' accounts are at risk because they haven't set up multi-factor authentication."
+        },
+        "error_explanation": {
+          "what_was_found": "We couldn't retrieve MFA registration statistics.",
+          "plain_english_result": "❓ Unable to check MFA registration rates.",
+          "risk_level": "Unknown - Unable to Assess",
+          "user_impact": "Cannot determine how many users have completed MFA setup."
+        }
+      },
+      "technical_explanation": {
+        "required_licenses": [
+          "Azure AD Premium P1 (for detailed reporting and campaigns)",
+          "Office 365 E3 or higher",
+          "Microsoft 365 Business Premium or higher"
+        ],
+        "required_permissions": [
+          "Reports.Read.All - To access authentication method reports",
+          "AuditLog.Read.All - For detailed registration events and tracking",
+          "UserAuthenticationMethod.Read.All - For per-user method details"
+        ],
+        "affected_system_components": [
+          "Azure AD Authentication Methods Policy",
+          "Microsoft Authenticator app",
+          "SMS/Voice providers",
+          "Combined security information registration portal"
+        ],
+        "technical_remediation": "1. Enable MFA registration enforcement in Azure AD Authentication Methods Policy\n2. Configure registration nudging policies with appropriate grace periods\n3. Set up combined security info registration experience\n4. Deploy Microsoft Authenticator via Intune configuration policies\n5. Create comprehensive user training materials and video tutorials",
+        "related_documentation": [
+          {
+            "title": "Plan an Azure MFA deployment",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/authentication/howto-mfa-getstarted"
+          },
+          {
+            "title": "Combined security information registration",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/authentication/concept-registration-mfa-sspr-combined"
+          }
+        ],
+        "configuration_paths": [
+          "Azure Portal > Azure AD > Security > Authentication methods > Activity",
+          "Azure Portal > Azure AD > Users > Authentication methods"
+        ],
+        "powershell_commands": [
+          "# Get MFA registration details via Microsoft Graph\nConnect-MgGraph -Scopes 'Reports.Read.All'\nGet-MgReportCredentialUserRegistrationDetail | Select-Object UserPrincipalName, IsMfaRegistered, MethodsRegistered"
+        ],
+        "rest_api_examples": [
+          {
+            "description": "Get user registration details",
+            "method": "GET",
+            "endpoint": "https://graph.microsoft.com/beta/reports/credentialUserRegistrationDetails",
+            "response_sample": "{\n  \"value\": [\n    {\n      \"userPrincipalName\": \"user@domain.com\",\n      \"isMfaRegistered\": true,\n      \"methodsRegistered\": [\"mobilePhone\", \"microsoftAuthenticatorPush\"]\n    }\n  ]\n}"
+          }
+        ],
+        "security_implications": "Low MFA registration rates create significant security gaps even when MFA policies are technically enabled. Unregistered users represent the weakest links in the authentication chain.",
+        "implementation_complexity": "Medium - Requires comprehensive user communication strategy and help desk preparation.",
+        "estimated_time_to_remediate": "4-8 weeks for full campaign including planning, communication strategy, and user registration period"
+      },
+      "cis_control": "CIS 5.1.3"
+    },
+    {
+      "id": "IAM-AUTH-004",
+      "name": "Legacy Authentication Blocking",
+      "description": "Verify that legacy authentication protocols are blocked",
+      "category": "Authentication",
+      "severity": "Critical",
+      "type": "graph_api",
+      "endpoint": "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies",
+      "method": "GET",
+      "required_scopes": ["Policy.Read.All"],
+      "evaluation": "($data.value | Where-Object { $_.state -eq 'enabled' -and $_.conditions.clientAppTypes -contains 'exchangeActiveSync' -and $_.conditions.clientAppTypes -contains 'other' -and $_.grantControls.builtInControls -contains 'block' }).Count -gt 0",
+      "pass_message": "Legacy authentication is properly blocked",
+      "fail_message": "Legacy authentication not blocked - security vulnerability exists",
+      "remediation": "Create CA policy to block legacy authentication protocols",
+      "resources_endpoint": "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies?$filter=state eq 'enabled'",
+      "simple_explanation": {
+        "what_was_checked": "We checked if your organization blocks old, less secure ways of connecting to email and other services.",
+        "why_it_matters": "Old authentication methods have security flaws that can't support modern protections like multi-factor authentication. Attackers often exploit these weaknesses.",
+        "pass_explanation": {
+          "what_was_found": "Old authentication methods are blocked, preventing less secure connections.",
+          "plain_english_result": "✅ Excellent! Legacy authentication vulnerabilities are blocked.",
+          "risk_level": "Low Risk - Well Protected",
+          "user_impact": "Users must use modern, secure applications to access company services."
+        },
+        "fail_explanation": {
+          "what_was_found": "Old, insecure authentication methods are still allowed, creating security risks.",
+          "plain_english_result": "🚨 Critical! Old authentication methods create serious security vulnerabilities.",
+          "risk_level": "Very High Risk - Immediate Action Needed",
+          "user_impact": "Attackers could use old vulnerabilities to access email and other services without proper authentication."
+        },
+        "error_explanation": {
+          "what_was_found": "We couldn't verify if legacy authentication is blocked.",
+          "plain_english_result": "❓ Unable to check legacy authentication settings.",
+          "risk_level": "Unknown - Unable to Assess",
+          "user_impact": "Cannot determine if old authentication vulnerabilities are protected against."
+        }
+      },
+      "technical_explanation": {
+        "required_licenses": [
+          "Azure AD Premium P1 (minimum for Conditional Access)",
+          "Office 365 E3 or higher",
+          "Microsoft 365 Business Premium or higher"
+        ],
+        "required_permissions": [
+          "Policy.Read.All - To read Conditional Access policies",
+          "Policy.ReadWrite.ConditionalAccess - To create/modify blocking policies"
+        ],
+        "affected_system_components": [
+          "Exchange Online (POP3, IMAP4, SMTP Auth, ActiveSync)",
+          "SharePoint Online",
+          "Office 365 legacy clients",
+          "Third-party email clients using basic authentication"
+        ],
+        "technical_remediation": "1. Inventory all applications using legacy authentication\n2. Update or replace applications to support modern authentication\n3. Create Conditional Access policy: 'Block Legacy Authentication'\n4. Target: All users, Cloud apps: All cloud apps\n5. Conditions: Client apps = Exchange ActiveSync, Other clients\n6. Access controls: Block access\n7. Enable policy in report-only mode first for impact assessment",
+        "related_documentation": [
+          {
+            "title": "Block legacy authentication with Conditional Access",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/conditional-access/block-legacy-authentication"
+          }
+        ],
+        "configuration_paths": [
+          "Azure Portal > Azure AD > Security > Conditional Access > New policy"
+        ],
+        "powershell_commands": [
+          "# Check for existing legacy auth blocking policies\nGet-AzureADMSConditionalAccessPolicy | Where-Object {\n    $_.Conditions.ClientAppTypes -contains 'other' -or \n    $_.Conditions.ClientAppTypes -contains 'exchangeActiveSync'\n} | Select-Object DisplayName, State, Id"
+        ],
+        "rest_api_examples": [
+          {
+            "description": "Create legacy authentication blocking policy",
+            "method": "POST",
+            "endpoint": "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies",
+            "request_body": "{\n  \"displayName\": \"Block Legacy Authentication\",\n  \"state\": \"enabledForReportingButNotEnforced\",\n  \"conditions\": {\n    \"clientAppTypes\": [\"exchangeActiveSync\", \"other\"]\n  },\n  \"grantControls\": {\n    \"builtInControls\": [\"block\"]\n  }\n}"
+          }
+        ],
+        "security_implications": "Legacy authentication protocols fundamentally bypass modern security controls. These protocols are vulnerable to password spraying, credential stuffing, and man-in-the-middle attacks.",
+        "implementation_complexity": "High - Requires comprehensive application inventory and extensive user impact assessment.",
+        "estimated_time_to_remediate": "6-12 weeks for comprehensive implementation including application discovery, updates, and phased policy deployment"
+      },
+      "cis_control": "CIS 1.1.3",
+      "nist_control": "IA-2(8)"
+    },
+    {
+      "id": "IAM-AUTH-005",
+      "name": "Passwordless Authentication Configuration",
+      "description": "Verify passwordless authentication methods are available and promoted",
+      "category": "Authentication",
+      "severity": "Medium",
+      "type": "graph_api",
+      "endpoint": "https://graph.microsoft.com/v1.0/policies/authenticationMethodsPolicy",
+      "method": "GET",
+      "required_scopes": ["Policy.Read.All"],
+      "evaluation": "$fido2Enabled = $data.authenticationMethodConfigurations | Where-Object { $_.id -eq 'Fido2' -and $_.state -eq 'enabled' }; $whfbEnabled = $data.authenticationMethodConfigurations | Where-Object { $_.id -eq 'MicrosoftAuthenticator' -and $_.state -eq 'enabled' }; ($fido2Enabled -ne $null) -or ($whfbEnabled -ne $null)",
+      "pass_message": "Passwordless authentication is properly configured",
+      "fail_message": "Passwordless authentication not enabled",
+      "remediation": "Enable and configure FIDO2 and Windows Hello for Business",
+      "resources_endpoint": "https://graph.microsoft.com/v1.0/policies/authenticationMethodsPolicy/authenticationMethodConfigurations",
+      "simple_explanation": {
+        "what_was_checked": "We checked if users can log in without passwords using modern security methods like fingerprints, face recognition, or security keys.",
+        "why_it_matters": "Passwordless authentication is more secure and convenient than passwords. It eliminates the risk of password theft while making login easier for users.",
+        "pass_explanation": {
+          "what_was_found": "Modern passwordless authentication methods are available for users.",
+          "plain_english_result": "✅ Great! Users can use secure, password-free login methods.",
+          "risk_level": "Low Risk - Well Protected",
+          "user_impact": "Users can log in securely using fingerprints, face recognition, or security keys instead of passwords."
+        },
+        "fail_explanation": {
+          "what_was_found": "Passwordless authentication options are not available to users.",
+          "plain_english_result": "⚠️ Consider enabling passwordless authentication for better security and user experience.",
+          "risk_level": "Medium Risk - Improve When Possible",
+          "user_impact": "Users must rely on passwords, which are less secure and convenient than modern alternatives."
+        },
+        "error_explanation": {
+          "what_was_found": "We couldn't check passwordless authentication settings.",
+          "plain_english_result": "❓ Unable to verify passwordless authentication availability.",
+          "risk_level": "Unknown - Unable to Assess",
+          "user_impact": "Cannot determine what login options are available to users."
+        }
+      },
+      "technical_explanation": {
+        "required_licenses": [
+          "Azure AD Premium P1 (for FIDO2 security keys)",
+          "Azure AD Premium P2 (for advanced passwordless features)",
+          "Windows 10/11 Pro or Enterprise (for Windows Hello for Business)",
+          "Microsoft 365 E3 or higher"
+        ],
+        "required_permissions": [
+          "Policy.Read.All - To read authentication methods policy",
+          "Policy.ReadWrite.AuthenticationMethod - To configure passwordless methods",
+          "UserAuthenticationMethod.Read.All - To view user authentication methods"
+        ],
+        "affected_system_components": [
+          "Azure AD Authentication Methods Policy",
+          "Windows Hello for Business infrastructure",
+          "FIDO2 security key providers (Yubico, etc.)",
+          "Microsoft Authenticator app",
+          "Azure AD joined devices",
+          "Hybrid Azure AD joined devices",
+          "Certificate Authority (for WHfB certificate trust)",
+          "TPM 2.0 hardware"
+        ],
+        "technical_remediation": "1. Enable FIDO2 security keys in Azure AD Authentication Methods Policy\n2. Configure Windows Hello for Business via Group Policy or Intune\n3. Enable Microsoft Authenticator passwordless phone sign-in\n4. Set up device compliance requirements for passwordless methods\n5. Create user enrollment campaigns and training materials\n6. Establish vendor relationships for FIDO2 security keys\n7. Configure certificate trust for Windows Hello for Business\n8. Monitor adoption rates and user feedback",
+        "related_documentation": [
+          {
+            "title": "Enable passwordless security key sign-in",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/authentication/howto-authentication-passwordless-security-key"
+          },
+          {
+            "title": "Windows Hello for Business deployment guide",
+            "url": "https://docs.microsoft.com/en-us/windows/security/identity-protection/hello-for-business/"
+          },
+          {
+            "title": "Microsoft Authenticator passwordless sign-in",
+            "url": "https://docs.microsoft.com/en-us/azure/active-directory/authentication/howto-authentication-passwordless-phone"
+          }
+        ],
+        "configuration_paths": [
+          "Azure Portal > Azure AD > Security > Authentication methods > FIDO2 security key",
+          "Azure Portal > Azure AD > Security > Authentication methods > Microsoft Authenticator",
+          "Intune Admin Center > Devices > Configuration profiles > Windows Hello for Business"
+        ],
+        "powershell_commands": [
+          "# Get authentication methods policy\nGet-MgPolicyAuthenticationMethodPolicy",
+          "# Enable FIDO2 security keys\nUpdate-MgPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration -AuthenticationMethodConfigurationId Fido2 -State enabled"
+        ],
+        "rest_api_examples": [
+          {
+            "description": "Get authentication methods policy",
+            "method": "GET",
+            "endpoint": "https://graph.microsoft.com/v1.0/policies/authenticationMethodsPolicy",
+            "response_sample": "{\n  \"authenticationMethodConfigurations\": [\n    {\n      \"id\": \"Fido2\",\n      \"state\": \"enabled\",\n      \"includeTargets\": [{\n        \"targetType\": \"group\",\n        \"id\": \"all_users\"\n      }]\n    }\n  ]\n}"
+          }
+        ],
+        "security_implications": "Passwordless authentication eliminates password-based attack vectors and provides stronger security assurance. Benefits include elimination of credential stuffing and password spraying attacks, resistance to phishing attempts, and stronger user verification through biometrics or hardware tokens.",
+        "implementation_complexity": "High - Requires device compatibility assessment, user training, hardware procurement for FIDO2 keys, and careful migration planning.",
+        "estimated_time_to_remediate": "3-6 months for full deployment including device assessment, hardware procurement, user training, and gradual rollout"
+      },
+      "cis_control": "CIS 5.1.4"
+    }
+  ]
+}
