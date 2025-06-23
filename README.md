@@ -42,7 +42,7 @@ M365SPAT is an advanced PowerShell-based security assessment tool designed speci
 
 1. **Clone the repository**
    ```powershell
-   git clone https://github.com/your-org/M365SPAT.git
+   git clone https://github.com/laythchebbi/M365SPAT.git
    cd M365SPAT
    ```
 
